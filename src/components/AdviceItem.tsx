@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Advice } from '../models/advice';
 import AdviceCard from './AdviceCard';
 import AdviceForm from './AdviceForm';

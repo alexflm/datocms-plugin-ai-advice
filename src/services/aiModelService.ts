@@ -19,10 +19,9 @@ const modelsCache: ModelCache = {};
 
 /**
  * Returns the default model for the specified API provider
- * @param providerType Type of API provider
  * @returns Identifier of the default model or an empty string
  */
-export function getDefaultModelForProvider(providerType: ApiProviderType): string {
+export function getDefaultModelForProvider(): string {
   // We no longer use default models
   return '';
 }

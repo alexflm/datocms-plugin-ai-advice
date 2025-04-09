@@ -14,10 +14,6 @@ export default function ConfigScreen({ ctx }: Props) {
   const [parameters, setParameters] = useState<PluginParameters>(
     getPluginParameters(ctx.plugin.attributes.parameters as Record<string, any>)
   );
-  
-  const saveParameters = () => {
-    ctx.updatePluginParameters(parameters as unknown as Record<string, unknown>);
-  };
 
   const addAdvice = () => {
     const newAdvice = createDefaultAdvice();

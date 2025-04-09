@@ -149,6 +149,9 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
       .action-button {
         min-width: 100px;
       }
+      .muted-text {
+        color: #666 !important;
+      }
       .settings-container {
         margin-top: 20px;
         padding: 15px;
@@ -191,9 +194,9 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
         width: 12px;
         height: 12px;
         margin-right: 6px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(0, 0, 0, 0.1);
         border-radius: 50%;
-        border-top-color: white;
+        border-top-color: #333;
         animation: spin 1s linear infinite;
       }
       @keyframes spin {
@@ -215,6 +218,17 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
         margin-top: 5px !important;
         font-size: 13px !important;
         animation: fadeIn 0.3s ease-in-out;
+      }
+      .muted-button {
+        width: 100%;
+        padding: 6px 12px;
+        background-color: #f0f0f0;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 14px;
+        text-align: center;
+        color: #666;
+        cursor: pointer;
       }
     `;
     document.head.appendChild(style);
@@ -243,8 +257,8 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
       return;
     }
     
-    // Check for selected model
-    if (availableModels.length > 0 && (!settings.model || settings.model === '')) {
+    // Check for selected model - this is a required field
+    if (!settings.model || settings.model === '') {
       alert('Please select a model before saving');
       return;
     }
@@ -256,7 +270,7 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
     }
     
     // Ensure model is set in settings before saving
-    if (availableModels.length > 0 && settings.model) {
+    if (settings.model) {
       // Check if settings are correctly saved in advice
       if (!advice.settings || advice.settings.model !== settings.model) {
         const updatedSettings = { ...settings };
@@ -357,4 +371,165 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
           label="API Key"
           value={advice.apiKey || ''}
           onChange={(newValue) => onFieldChange('apiKey', newValue)}
-          placeholder={`Enter API key for ${API_PROVIDERS[advice.apiProvider].name}`
+          placeholder={`Enter API key for ${API_PROVIDERS[advice.apiProvider].name}`}
+        />
+      </div>
+      
+      {/* Generation Settings section */}
+      {advice.apiKey ? (
+        <div className="settings-container">
+          <h3 className="settings-title">Generation Settings</h3>
+          <div className="settings-grid">
+            {/* Model selector */}
+            <div className="grid-span-2">
+              {isLoadingModels ? (
+                <div className="model-loading">
+                  <Spinner size={16} />
+                  <span className="model-loading-text">Loading available models...</span>
+                </div>
+              ) : (
+                <TextField
+                  id={`model_${advice.id}`}
+                  name={`model_${advice.id}`}
+                  label="Model"
+                  value=""
+                  onChange={() => {}}
+                  textInputProps={{
+                    className: 'hidden-input',
+                  }}
+                  hint={
+                    <div className="select-wrapper">
+                      <select 
+                        id={`model_select_${advice.id}`}
+                        className="datocms-select"
+                        value={settings.model || ''}
+                        onChange={(e) => handleSettingsChange('model', e.target.value)}
+                        style={{ 
+                          width: '100%', 
+                          padding: '10px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          fontSize: '14px',
+                          backgroundColor: 'white',
+                          boxSizing: 'border-box',
+                          appearance: 'none',
+                          backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
+                          backgroundRepeat: 'no-repeat',
+                          backgroundPosition: 'right 10px center',
+                          backgroundSize: '10px',
+                          paddingRight: '30px',
+                          outline: 'none',
+                          color: '#333'
+                        }}
+                        disabled={availableModels.length === 0}
+                      >
+                        <option value="" disabled>Select a model</option>
+                        {availableModels.map((model) => (
+                          <option key={model.id} value={model.id}>
+                            {model.name || getModelDisplayName(model.id)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  }
+                  error={modelNotFound ? "Previously saved model is not available. Please select a new model." : undefined}
+                />
+              )}
+            </div>
+            
+            {/* Temperature control */}
+            <div>
+              <TextField
+                id={`temperature_${advice.id}`}
+                name={`temperature_${advice.id}`}
+                label="Temperature"
+                value={String(settings.temperature || 0.7)}
+                onChange={(newValue) => 
+                  handleSettingsChange('temperature', parseFloat(newValue) || 0.7)
+                }
+                placeholder="0.7"
+                textInputProps={{
+                  type: 'number',
+                  min: '0',
+                  max: '1',
+                  step: '0.1',
+                }}
+                hint="Controls randomness: 0 is deterministic, 1 is creative"
+              />
+            </div>
+            
+            {/* Max Tokens control */}
+            <div>
+              <TextField
+                id={`maxTokens_${advice.id}`}
+                name={`maxTokens_${advice.id}`}
+                label="Max Tokens"
+                value={String(settings.maxTokens || 16000)}
+                onChange={(newValue) => 
+                  handleSettingsChange('maxTokens', parseInt(newValue) || 16000)
+                }
+                placeholder="16000"
+                textInputProps={{
+                  type: 'number',
+                  min: '100',
+                }}
+                hint="Maximum length of generated text"
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="field-container muted-text" style={{ textAlign: 'center', padding: '15px', border: '1px dashed #e0e0e0', borderRadius: '4px' }}>
+          Enter API key to configure generation settings
+        </div>
+      )}
+      
+      {/* Save button */}
+      <div className="field-container" style={{ marginTop: '30px' }}>
+        {saveStatus === 'initial' && (
+          <Button 
+            type="button" 
+            buttonType="primary" 
+            buttonSize="s"
+            onClick={handleSave}
+            disabled={isLoadingModels}
+            className="action-button"
+            style={{ width: '100%' }}
+          >
+            Save
+          </Button>
+        )}
+        
+        {saveStatus === 'saving' && (
+          <Button 
+            type="button" 
+            buttonType="muted" 
+            buttonSize="s"
+            disabled={true}
+            className="action-button"
+            style={{ width: '100%' }}
+          >
+            <span className="save-loading">
+              <span className="spinner"></span>
+              Saving...
+            </span>
+          </Button>
+        )}
+        
+        {saveStatus === 'saved' && (
+          <Button 
+            type="button" 
+            buttonType="muted" 
+            buttonSize="s"
+            onClick={handleSave}
+            className="action-button"
+            style={{ width: '100%' }}
+          >
+            Saved!
+          </Button>
+        )}
+      </div>
+      
+    </FieldGroup>
+  );
+}
