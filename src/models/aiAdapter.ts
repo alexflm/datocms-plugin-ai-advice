@@ -5,11 +5,26 @@ export interface AIGenerationSettings {
   maxTokens?: number;     // Maximum number of tokens for content generation
 }
 
+// Metadata for advice toggles with titles and descriptions
+export const adviceToggleMetadata = {
+  imageAnalysis: {
+    title: "Analyzing Images",
+    description: "If you will be transmitting the complete model with images or structured text containing images, the system will analyze these visual elements."
+  },
+  imageOptimization: {
+    title: "Optimizing Images",
+    description: "Images will be compressed for LLM transmission. All images are optimized using imgix parameters to ensure efficient processing."
+  },
+  contentEnhancement: {
+    title: "Suggesting Improved Content",
+    description: "The model will provide you with a new enhanced version of your content with improvements and refinements."
+  }
+};
+
 // Default settings for each AI provider
 export interface AIDefaultSettings {
   defaultTemperature: number;   // Default temperature for creativity balance
-  defaultModel: string;         // Default AI model
-  availableModels: string[];    // List of available machine learning models
+  defaultMaxTokens: number;
 }
 
 // Detailed information about AI model
@@ -18,6 +33,7 @@ export interface AIModelInfo {
   name: string;          // Display name of the AI model
   description?: string;  // Description of model capabilities and specialization
   maxTokens?: number;    // Maximum context window (in tokens)
+  contextWindow?: number;
   isDefault?: boolean;   // Whether it's the preferred default model
 }
 

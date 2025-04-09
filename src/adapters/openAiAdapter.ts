@@ -20,9 +20,8 @@ export class OpenAiAdapter implements AIAdapter {
   
   getDefaultSettings(): DefaultSettings {
     return {
-      defaultTemperature: 0.7,
-      defaultModel: '',
-      availableModels: []
+      defaultTemperature: 0.5,
+      defaultMaxTokens: 16000
     };
   }
   
@@ -37,15 +36,10 @@ export class OpenAiAdapter implements AIAdapter {
     try {
       const response = await this.client.models.list();
       const models = response.data
-        .filter(model => 
-          model.id.includes('gpt') && 
-          !model.id.includes('instruct') &&
-          !model.id.includes('-vision-')
-        )
         .sort((a, b) => b.created - a.created)
         .map(model => ({
           id: model.id,
-          name: this.formatModelName(model.id),
+          name: model.id,
           isDefault: false
         }));
       
@@ -54,17 +48,6 @@ export class OpenAiAdapter implements AIAdapter {
       console.error('Error fetching OpenAI models:', error);
       return [];
     }
-  }
-  
-  private formatModelName(modelId: string): string {
-    // Convert model ID to a readable name
-    return modelId
-      .split('-')
-      .map(part => {
-        if (part.toLowerCase() === 'gpt') return part.toUpperCase();
-        return part.charAt(0).toUpperCase() + part.slice(1);
-      })
-      .join(' ');
   }
   
   async generateAdvice(prompt: string, settings?: GenerationSettings): Promise<string> {
@@ -79,7 +62,7 @@ export class OpenAiAdapter implements AIAdapter {
     try {
       const response = await this.client.chat.completions.create({
         model: settings.model,
-        max_tokens: settings?.maxTokens || 1000,
+        max_tokens: settings?.maxTokens || this.getDefaultSettings().defaultMaxTokens,
         temperature: settings?.temperature || this.getDefaultSettings().defaultTemperature,
         messages: [{ role: 'user', content: prompt }],
       });

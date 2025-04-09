@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { TextField, FieldGroup } from 'datocms-react-ui';
 import { ApiProviderType, API_PROVIDERS } from '../models/apiProvider';
-import { Advice, AdviceGenerationSettings } from '../models/advice';
+import { Advice, LLMGenerationSettings, AdviceSettings } from '../models/advice';
 import { fetchModelsFromProvider } from '../services/aiModelService';
 import type { AIModelInfo as ModelInfo } from '../models/aiAdapter';
 import ApiKeySection from './AdviceForm/ApiKeySection';
 import ModelSelector from './AdviceForm/ModelSelector';
 import SettingsPanel from './AdviceForm/SettingsPanel';
 import FormActions from './AdviceForm/FormActions';
+import MarkdownFields from './AdviceForm/MarkdownFields';
+import AdviceToggles from './AdviceForm/AdviceToggles';
 import '../styles/AdviceForm.css';
 
 // Helper functions for working with models
@@ -30,11 +32,18 @@ interface AdviceFormProps {
 }
 
 export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: AdviceFormProps) {
-  // Local state for settings
-  const [settings, setSettings] = useState<AdviceGenerationSettings>({
-    temperature: advice.settings?.temperature !== undefined ? advice.settings.temperature : 0.7,
-    maxTokens: advice.settings?.maxTokens !== undefined ? advice.settings.maxTokens : 16000,
-    model: advice.settings?.model || ''
+  // Local state for LLM settings
+  const [llmSettings, setLlmSettings] = useState<LLMGenerationSettings>({
+    temperature: advice.llmSettings?.temperature !== undefined ? advice.llmSettings.temperature : 0.7,
+    maxTokens: advice.llmSettings?.maxTokens !== undefined ? advice.llmSettings.maxTokens : 16000,
+    model: advice.llmSettings?.model || ''
+  });
+  
+  // Local state for advice settings
+  const [adviceSettings, setAdviceSettings] = useState<AdviceSettings>({
+    imageAnalysis: advice.adviceSettings?.imageAnalysis || false,
+    imageOptimization: advice.adviceSettings?.imageOptimization || false,
+    contentEnhancement: advice.adviceSettings?.contentEnhancement || false
   });
   
   // State for models
@@ -72,9 +81,9 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
             
             // If models loaded successfully
             // If model already exists in settings and is in the list of available models, use it
-            const existingModel = advice.settings?.model;
+            const existingModel = advice.llmSettings?.model;
             if (existingModel && models.some(m => m.id === existingModel)) {
-              setSettings(prev => ({
+              setLlmSettings(prev => ({
                 ...prev,
                 model: existingModel
               }));
@@ -83,14 +92,14 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
               setModelNotFound(true);
               // Set default model or first from the list
               const defaultModel = models.find((m: ModelInfo) => m.isDefault)?.id || models[0].id;
-              setSettings(prev => ({
+              setLlmSettings(prev => ({
                 ...prev,
                 model: defaultModel
               }));
             } else {
               // If no model selected, use default model
               const defaultModel = models.find((m: ModelInfo) => m.isDefault)?.id || models[0].id;
-              setSettings(prev => ({
+              setLlmSettings(prev => ({
                 ...prev,
                 model: defaultModel
               }));
@@ -99,7 +108,7 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
             // Empty models array means the API key is likely invalid
             setIsApiKeyValid(false);
             setApiKeyMessage('API request failed. No models found. Please check your API key.');
-            setSettings(prev => ({
+            setLlmSettings(prev => ({
               ...prev,
               model: ''
             }));
@@ -124,7 +133,7 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
     function loadFallbackModels() {
       // We no longer use predefined models
       setAvailableModels([]);
-      setSettings(prev => ({
+      setLlmSettings(prev => ({
         ...prev,
         model: ''
       }));
@@ -133,16 +142,28 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
     loadModels();
   }, [advice.apiProvider, advice.apiKey]);
   
-  // Update settings in parent component when they change
+  // Update LLM settings in parent component when they change
   useEffect(() => {
-    if (settings) {
-      onFieldChange('settings', settings);
+    if (llmSettings) {
+      onFieldChange('llmSettings', llmSettings);
     }
-  }, [settings, onFieldChange, advice.id]);
+  }, [llmSettings, onFieldChange, advice.id]);
   
-  // Handler for settings change
-  const handleSettingsChange = (field: keyof AdviceGenerationSettings, value: any) => {
-    setSettings(prev => ({ ...prev, [field]: value }));
+  // Update advice settings in parent component when they change
+  useEffect(() => {
+    if (adviceSettings) {
+      onFieldChange('adviceSettings', adviceSettings);
+    }
+  }, [adviceSettings, onFieldChange, advice.id]);
+  
+  // Handler for LLM settings change
+  const handleLlmSettingsChange = (field: keyof LLMGenerationSettings, value: any) => {
+    setLlmSettings(prev => ({ ...prev, [field]: value }));
+  };
+  
+  // Handler for advice settings change
+  const handleAdviceSettingsChange = (settings: AdviceSettings) => {
+    setAdviceSettings(settings);
   };
 
   // Check before saving
@@ -166,7 +187,7 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
     }
     
     // Check for selected model - this is a required field
-    if (!settings.model || settings.model === '') {
+    if (!llmSettings.model || llmSettings.model === '') {
       alert('Please select a model before saving');
       return;
     }
@@ -178,11 +199,10 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
     }
     
     // Ensure model is set in settings before saving
-    if (settings.model) {
+    if (llmSettings.model) {
       // Check if settings are correctly saved in advice
-      if (!advice.settings || advice.settings.model !== settings.model) {
-        const updatedSettings = { ...settings };
-        onFieldChange('settings', updatedSettings);
+      if (!advice.llmSettings || advice.llmSettings.model !== llmSettings.model) {
+        onFieldChange('llmSettings', llmSettings);
       }
     }
     
@@ -272,15 +292,15 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
       />
       
       {advice.apiKey && isApiKeyValid === true ? (
-        <SettingsPanel>
+        <SettingsPanel title="Generation Settings">
           <ModelSelector 
             adviceId={advice.id}
             isLoadingModels={isLoadingModels}
             availableModels={availableModels}
-            modelValue={settings.model || ''}
+            modelValue={llmSettings.model || ''}
             modelNotFound={modelNotFound}
             getModelDisplayName={getModelDisplayName}
-            onModelChange={(value) => handleSettingsChange('model', value)}
+            onModelChange={(value) => handleLlmSettingsChange('model', value)}
           />
           
           <div className="settings-grid" style={{ marginTop: '20px' }}>
@@ -289,10 +309,10 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
                 id={`temperature_${advice.id}`}
                 name={`temperature_${advice.id}`}
                 label="Temperature"
-                value={String(settings.temperature !== undefined ? settings.temperature : 0.7)}
+                value={String(llmSettings.temperature !== undefined ? llmSettings.temperature : 0.7)}
                 onChange={(newValue) => {
                   const parsedValue = parseFloat(newValue);
-                  handleSettingsChange('temperature', !isNaN(parsedValue) ? parsedValue : 0.7);
+                  handleLlmSettingsChange('temperature', !isNaN(parsedValue) ? parsedValue : 0.7);
                 }}
                 placeholder="0.7"
                 textInputProps={{
@@ -310,10 +330,10 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
                 id={`maxTokens_${advice.id}`}
                 name={`maxTokens_${advice.id}`}
                 label="Max Tokens"
-                value={String(settings.maxTokens !== undefined ? settings.maxTokens : 16000)}
+                value={String(llmSettings.maxTokens !== undefined ? llmSettings.maxTokens : 16000)}
                 onChange={(newValue) => {
                   const parsedValue = parseInt(newValue);
-                  handleSettingsChange('maxTokens', !isNaN(parsedValue) ? parsedValue : 16000);
+                  handleLlmSettingsChange('maxTokens', !isNaN(parsedValue) ? parsedValue : 16000);
                 }}
                 placeholder="16000"
                 textInputProps={{
@@ -330,6 +350,23 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
           {!advice.apiKey ? 'Enter API key to configure generation settings' : isApiKeyValid === false ? 'API key is invalid. Please enter a valid API key to configure generation settings' : 'Validating API key...'}
         </div>
       )}
+      
+      {/* Компонент с тоглами adviceSettings */}
+      <div style={{ marginTop: '20px' }}>
+        <AdviceToggles 
+          adviceId={advice.id}
+          adviceSettings={adviceSettings}
+          onSettingsChange={handleAdviceSettingsChange}
+        />
+      </div>
+      
+      {/* Добавляем секцию с markdown полями */}
+      <div className="markdown-prompts-panel" style={{ marginTop: '20px' }}>
+        <MarkdownFields 
+          advice={advice}
+          onFieldChange={onFieldChange}
+        />
+      </div>
       
       <FormActions 
         saveStatus={saveStatus}

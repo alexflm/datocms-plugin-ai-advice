@@ -39,9 +39,35 @@ export async function generateAdviceFromAllProviders(
       const adapter = createAIAdapter(advice);
       
       if (adapter.isConfigured()) {
-        // Use settings for specific advice if provided
-        const settings = generationSettings?.[advice.id];
-        const response = await adapter.generateAdvice(prompt, settings);
+        // Create settings from llmSettings
+        const settings: GenerationSettings = {
+          model: advice.llmSettings?.model,
+          temperature: advice.llmSettings?.temperature,
+          maxTokens: advice.llmSettings?.maxTokens
+        };
+        
+        // Override with custom settings if provided
+        if (generationSettings?.[advice.id]) {
+          Object.assign(settings, generationSettings[advice.id]);
+        }
+        
+        // Apply adviceSettings to the prompt if needed
+        let processedPrompt = prompt;
+        
+        // Example of how to enhance prompt based on adviceSettings
+        if (advice.adviceSettings?.imageAnalysis) {
+          processedPrompt = `[IMAGE ANALYSIS ENABLED] ${processedPrompt}`;
+        }
+        
+        if (advice.adviceSettings?.imageOptimization) {
+          processedPrompt = `[IMAGE OPTIMIZATION ENABLED] ${processedPrompt}`;
+        }
+        
+        if (advice.adviceSettings?.contentEnhancement) {
+          processedPrompt = `[CONTENT ENHANCEMENT ENABLED] ${processedPrompt}`;
+        }
+        
+        const response = await adapter.generateAdvice(processedPrompt, settings);
         results[advice.id] = response;
       } else {
         results[advice.id] = 'API key is not configured';

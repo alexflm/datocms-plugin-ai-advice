@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Dropdown, DropdownMenu as DatoDropdownMenu, DropdownOption } from 'datocms-react-ui';
 
 interface DropdownMenuProps {
   adviceId: string;
@@ -15,91 +16,73 @@ export default function DropdownMenu({
   onDelete, 
   onClose 
 }: DropdownMenuProps) {
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  
-  // Close menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && 
-          !dropdownRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    }
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [onClose]);
-  
   return (
-    <div
-      ref={dropdownRef}
-      className="advice-dropdown-menu"
+    <div 
       style={{
         position: 'fixed',
         top: `${dropdownPosition.top}px`,
-        right: `${dropdownPosition.right}px`,
-        zIndex: 9999
+        left: `${window.innerWidth - dropdownPosition.right - 200}px`,
+        zIndex: 9999,
+        width: '80px',
+        maxWidth: '80px'
       }}
     >
-      <div className="advice-dropdown-item">
-        <span className="custom-button duplicate-button" onClick={(e) => {
-          e.stopPropagation();
-          if (onDuplicate) onDuplicate(adviceId);
-          onClose();
-        }}>
-          Duplicate
-        </span>
-      </div>
-      <div className="advice-dropdown-item">
-        <span className="custom-button delete-button" onClick={(e) => {
-          e.stopPropagation();
-          if (onDelete) onDelete(adviceId);
-          onClose();
-        }}>
-          Delete
-        </span>
+      <div style={{ width: '80px', maxWidth: '80px', overflow: 'hidden' }}>
+        <DatoDropdownMenu>
+          {onDuplicate && (
+            <DropdownOption 
+              onClick={(e) => {
+                e.stopPropagation();
+                onDuplicate(adviceId);
+                onClose();
+              }}
+            >
+              Duplicate
+            </DropdownOption>
+          )}
+          {onDelete && (
+            <DropdownOption 
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(adviceId);
+                onClose();
+              }}
+              red
+            >
+              Delete
+            </DropdownOption>
+          )}
+        </DatoDropdownMenu>
       </div>
       
       <style>
         {`
-          .advice-dropdown-menu {
-            min-width: 120px;
-            background-color: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 4px;
-            padding: 8px 0;
+          /* Ограничение ширины элементов выпадающего меню */
+          [data-menu-content] {
+            width: 80px !important;
+            max-width: 80px !important;
+            min-width: 0 !important;
           }
           
-          .advice-dropdown-item {
-            padding: 6px 8px;
-            display: block;
-            width: 100%;
-            text-align: left;
+          [data-focusable-element] {
+            width: 100% !important;
+            max-width: 80px !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
           }
           
-          .custom-button {
-            display: block;
-            width: 100%;
-            text-align: left;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 400;
-            padding: 4px 8px;
-            font-family: inherit;
+          [data-menu] {
+            width: 80px !important;
+            max-width: 80px !important;
+            min-width: 0 !important;
           }
           
-          .duplicate-button {
-            color: #F56910;
-          }
-          
-          .delete-button {
-            color: #666;
+          button[data-menu-item] {
+            width: 80px !important;
+            max-width: 80px !important;
+            min-width: 0 !important;
           }
         `}
       </style>

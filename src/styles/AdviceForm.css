@@ -1,8 +1,25 @@
 /* Styles for AdviceForm and its components */
 
+/* CSS переменные для цветов */
+:root {
+  --primary-color: #4c9aff;
+  --primary-color-shadow: rgba(76, 154, 255, 0.3);
+  --toggle-bg-color: #ccc;
+  --toggle-knob-color: white;
+  --text-muted: #666;
+  --border-color: #e0e0e0;
+  --bg-light: #f9f9f9;
+  --bg-lighter: #f0f0f0;
+  --text-dark: #333;
+  --error-color: #e34850;
+  --border-light: #eee;
+  --spinner-border: rgba(0, 0, 0, 0.1);
+  --spinner-active: #333;
+}
+
 .datocms-select:focus {
-  border-color: #4c9aff !important;
-  box-shadow: 0 0 0 2px rgba(76,154,255,.3) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px var(--primary-color-shadow) !important;
 }
 
 .hidden-input {
@@ -30,22 +47,22 @@
 }
 
 .muted-text {
-  color: #666 !important;
+  color: var(--text-muted) !important;
 }
 
 .settings-container {
   margin-top: 20px;
   padding: 15px;
-  background-color: #f9f9f9;
+  background-color: var(--bg-light);
   border-radius: 4px;
-  border: 1px dashed #e0e0e0;
+  border: 1px dashed var(--border-color);
 }
 
 .settings-title {
   margin-top: 0;
   margin-bottom: 15px;
   font-size: 14px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .settings-grid {
@@ -68,7 +85,7 @@
 .model-loading-text {
   margin-left: 8px;
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .save-loading {
@@ -82,9 +99,9 @@
   width: 12px;
   height: 12px;
   margin-right: 6px;
-  border: 2px solid rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--spinner-border);
   border-radius: 50%;
-  border-top-color: #333;
+  border-top-color: var(--spinner-active);
   animation: spin 1s linear infinite;
 }
 
@@ -105,7 +122,7 @@
 }
 
 .datocms-field-error {
-  color: #e34850 !important;
+  color: var(--error-color) !important;
   font-weight: 500 !important;
   margin-top: 5px !important;
   font-size: 13px !important;
@@ -115,11 +132,112 @@
 .muted-button {
   width: 100%;
   padding: 6px 12px;
-  background-color: #f0f0f0;
-  border: 1px solid #e0e0e0;
+  background-color: var(--bg-lighter);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 14px;
   text-align: center;
-  color: #666;
+  color: var(--text-muted);
   cursor: pointer;
+}
+
+/* Стили для секции markdown полей */
+.markdown-fields-container {
+  margin-bottom: 20px;
+}
+
+.markdown-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-dark);
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 8px;
+}
+
+.markdown-prompts-panel {
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+/* Стили для переключателей (тоглов) */
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.toggle-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--toggle-bg-color);
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--toggle-knob-color);
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--primary-color);
+}
+
+input:focus + .toggle-slider {
+  box-shadow: 0 0 0 2px var(--primary-color-shadow);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.toggle-content {
+  flex: 1;
+}
+
+.toggle-title {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.toggle-description {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
 } 

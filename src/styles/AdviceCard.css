@@ -1,1 +1,23 @@
 /* Styles for AdviceCard and its subcomponents */ 
+
+/* Анимация оранжевой рамки для новых элементов */
+@keyframes highlightNewItem {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(var(--alert-color-rgb-components), 0);
+    border-color: var(--border-color);
+  }
+  50% {
+    box-shadow: 0 0 0 2px rgba(var(--alert-color-rgb-components), 0.7);
+    border-color: var(--alert-color);
+  }
+}
+
+.highlight-new-item {
+  animation: highlightNewItem 2s ease-in-out;
+}
+
+/* Специальный класс только для первоначальной подсветки */
+.new-item-highlight {
+  animation: highlightNewItem 2s ease-in-out;
+  border-color: var(--border-color) !important; /* Возвращаем обычный цвет рамки после анимации */
+} 

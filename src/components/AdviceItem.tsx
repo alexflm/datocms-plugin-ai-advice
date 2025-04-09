@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Advice } from '../models/advice';
 import AdviceCard from './AdviceCard';
 import AdviceForm from './AdviceForm';
+import '../styles/AdviceCard.css';
 
 interface AdviceItemProps {
   advice: Advice;
@@ -9,22 +10,38 @@ interface AdviceItemProps {
   onDelete: (id: string) => void;
   onSave: (advice: Advice) => void;
   onDuplicate?: (advice: Advice) => void;
+  isNew?: boolean;
 }
 
-export default function AdviceItem({ advice, onUpdate, onDelete, onSave, onDuplicate }: AdviceItemProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export default function AdviceItem({ advice, onUpdate, onDelete, onSave, onDuplicate, isNew = false }: AdviceItemProps) {
+  const [isExpanded, setIsExpanded] = useState(isNew);
   const [localAdvice, setLocalAdvice] = useState<Advice>(advice);
   const [isEnabled, setIsEnabled] = useState(advice.isEnabled);
+  const [showHighlight, setShowHighlight] = useState(isNew);
+  
+  useEffect(() => {
+    if (isNew) {
+      const timer = setTimeout(() => {
+        setShowHighlight(false);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isNew]);
 
-  // Synchronize local state with external state when props change
   useEffect(() => {
     setLocalAdvice(advice);
   }, [advice]);
 
   useEffect(() => {
-    // Synchronize local state with external state when props change
     setIsEnabled(advice.isEnabled);
   }, [advice.isEnabled]);
+
+  useEffect(() => {
+    if (isNew) {
+      setIsExpanded(true);
+    }
+  }, [isNew]);
 
   const handleFieldChange = <K extends keyof Advice>(field: K, value: Advice[K]) => {
     setLocalAdvice(prev => ({
@@ -42,7 +59,7 @@ export default function AdviceItem({ advice, onUpdate, onDelete, onSave, onDupli
       isEnabled: newValue
     };
     
-    onUpdate(updatedAdvice); // Immediately save the enable/disable state change
+    onUpdate(updatedAdvice);
   };
 
   const handleSave = () => {
@@ -60,14 +77,17 @@ export default function AdviceItem({ advice, onUpdate, onDelete, onSave, onDupli
   };
 
   return (
-    <div style={{ 
-      border: '1px solid #e0e0e0', 
-      borderRadius: '4px',
-      backgroundColor: '#f9f9f9',
-      marginBottom: '16px',
-      overflow: 'hidden',
-      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
-    }}>
+    <div 
+      className={showHighlight ? 'new-item-highlight' : ''} 
+      style={{ 
+        border: '1px solid #e0e0e0', 
+        borderRadius: '4px',
+        backgroundColor: '#f9f9f9',
+        marginBottom: '16px',
+        overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
+      }}
+    >
       <div style={{ 
         padding: isExpanded ? '16px 16px 0 16px' : '16px' 
       }}>

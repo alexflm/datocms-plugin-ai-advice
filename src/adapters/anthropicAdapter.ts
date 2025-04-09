@@ -4,9 +4,11 @@ import type { AIAdapter, AIGenerationSettings as GenerationSettings, AIDefaultSe
 // Anthropic (Claude) API Adapter
 export class AnthropicAdapter implements AIAdapter {
   private client: Anthropic | null = null;
+  private apiKey: string | null = null;
   
   constructor(apiKey?: string) {
     if (apiKey) {
+      this.apiKey = apiKey;
       this.client = new Anthropic({ 
         apiKey,
         dangerouslyAllowBrowser: true 
@@ -20,9 +22,8 @@ export class AnthropicAdapter implements AIAdapter {
   
   getDefaultSettings(): DefaultSettings {
     return {
-      defaultTemperature: 0.7,
-      defaultModel: '',
-      availableModels: []
+      defaultTemperature: 0.5,
+      defaultMaxTokens: 16000
     };
   }
   
@@ -30,27 +31,17 @@ export class AnthropicAdapter implements AIAdapter {
    * Gets list of available models from Anthropic API
    */
   async fetchAvailableModels(): Promise<ModelInfo[]> {
-    if (!this.client) {
+    if (!this.client || !this.apiKey) {
       return [];
     }
     
     try {
-      // Define available Claude models
-      const claudeModels = [
-        { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', maxTokens: 200000 },
-        { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', maxTokens: 180000 },
-        { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', maxTokens: 150000 },
-        { id: 'claude-2.1', name: 'Claude 2.1', maxTokens: 100000 },
-        { id: 'claude-2.0', name: 'Claude 2.0', maxTokens: 100000 },
-        { id: 'claude-instant-1.2', name: 'Claude Instant 1.2', maxTokens: 100000 },
-      ];
+      const modelsResponse = await this.client.models.list();
       
-      // Transform models to ModelInfo format
-      return claudeModels.map(model => ({
+      return modelsResponse.data.map((model: any) => ({
         id: model.id,
-        name: model.name,
-        maxTokens: model.maxTokens,
-        isDefault: model.id.includes('claude-3-haiku') // Haiku by default as the most accessible
+        name: model.name, 
+        maxTokens: model.max_tokens
       }));
     } catch (error) {
       console.error('Error fetching Anthropic models:', error);
@@ -70,7 +61,7 @@ export class AnthropicAdapter implements AIAdapter {
     try {
       const response = await this.client.messages.create({
         model: settings.model,
-        max_tokens: settings?.maxTokens || 1000,
+        max_tokens: settings?.maxTokens || this.getDefaultSettings().defaultMaxTokens,
         temperature: settings?.temperature || this.getDefaultSettings().defaultTemperature,
         messages: [{ role: 'user', content: prompt }],
       });
