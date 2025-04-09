@@ -1,0 +1,47 @@
+{
+  "name": "datocms-plugin-ai-advice",
+  "description": "AI Advice is a DatoCMS plugin that delivers automated content recommendations by analyzing your entries within context. Get actionable, structured suggestions to improve content quality without manual interaction.",
+  "homepage": "https://github.com/alexflm/datocms-plugin-ai-advice",
+  "private": false,
+  "version": "0.1.0",
+  "author": "Alex Gorbunov <alekseygorbunov75@gmail.com>",
+  "type": "module",
+  "keywords": [
+    "datocms-plugin"
+  ],
+  "datoCmsPlugin": {
+    "title": "AI Advice",
+    "coverImage": "docs/cover-1200x800.png",
+    "previewImage": "docs/preview.mp4",
+    "entryPoint": "dist/index.html",
+    "permissions": []
+  },
+  "files": [
+    "dist",
+    "docs"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@google/generative-ai": "^0.24.0",
+    "datocms-plugin-sdk": "^2.0.9",
+    "datocms-react-ui": "^2.0.9",
+    "openai": "^4.93.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "globals": "^15.9.0",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.1"
+  }
+}
