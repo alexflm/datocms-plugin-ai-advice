@@ -44,12 +44,20 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
   // Add state for tracking non-existent model
   const [modelNotFound, setModelNotFound] = useState<boolean>(false);
   
+  // State for API key validation
+  const [isApiKeyValid, setIsApiKeyValid] = useState<boolean | null>(null);
+  const [apiKeyMessage, setApiKeyMessage] = useState<string>('');
+  
   // State for saving
   const [saveStatus, setSaveStatus] = useState<'initial' | 'saving' | 'saved'>('initial');
   
   // Load models from API if key exists
   useEffect(() => {
     async function loadModels() {
+      // Reset API key validation status
+      setIsApiKeyValid(null);
+      setApiKeyMessage('');
+      
       // If API key is set for provider, load models from API
       if (advice.apiKey) {
         setIsLoadingModels(true);
@@ -58,8 +66,12 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
           const models = await fetchModelsFromProvider(advice);
           setAvailableModels(models);
           
-          // If models loaded successfully
+          // Mark API key as valid ONLY if models were found
           if (models.length > 0) {
+            setIsApiKeyValid(true);
+            setApiKeyMessage(`API key verified successfully. Found ${models.length} model${models.length !== 1 ? 's' : ''}.`);
+            
+            // If models loaded successfully
             // If model already exists in settings and is in the list of available models, use it
             const existingModel = advice.settings?.model;
             if (existingModel && models.some(m => m.id === existingModel)) {
@@ -85,6 +97,9 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
               }));
             }
           } else {
+            // Empty models array means the API key is likely invalid
+            setIsApiKeyValid(false);
+            setApiKeyMessage('API request failed. No models found. Please check your API key.');
             setSettings(prev => ({
               ...prev,
               model: ''
@@ -92,6 +107,9 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
           }
         } catch (error) {
           console.error('Error loading models:', error);
+          // Mark API key as invalid and show error message
+          setIsApiKeyValid(false);
+          setApiKeyMessage('API request failed. Please check your API key.');
           // In case of error, use predefined models
           loadFallbackModels();
         } finally {
@@ -372,7 +390,30 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
           value={advice.apiKey || ''}
           onChange={(newValue) => onFieldChange('apiKey', newValue)}
           placeholder={`Enter API key for ${API_PROVIDERS[advice.apiProvider].name}`}
+          error={isApiKeyValid === false ? apiKeyMessage : undefined}
         />
+        {isApiKeyValid === true && advice.apiKey && (
+          <div style={{ 
+            marginTop: '5px', 
+            fontSize: '13px', 
+            color: '#00aa55',
+            animation: 'fadeIn 0.3s ease-in-out' 
+          }}>
+            {apiKeyMessage}
+          </div>
+        )}
+        {isLoadingModels && advice.apiKey && (
+          <div style={{ 
+            marginTop: '5px', 
+            fontSize: '13px', 
+            color: '#666',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <Spinner size={12} style={{ marginRight: '8px' }} />
+            Validating API key...
+          </div>
+        )}
       </div>
       
       {/* Generation Settings section */}
