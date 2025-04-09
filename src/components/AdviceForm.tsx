@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Button, TextField, FieldGroup, Spinner } from 'datocms-react-ui';
+import { TextField, FieldGroup } from 'datocms-react-ui';
 import { ApiProviderType, API_PROVIDERS } from '../models/apiProvider';
 import { Advice, AdviceGenerationSettings } from '../models/advice';
-import { 
-  fetchModelsFromProvider
-} from '../services/aiModelService';
+import { fetchModelsFromProvider } from '../services/aiModelService';
 import type { AIModelInfo as ModelInfo } from '../models/aiAdapter';
+import ApiKeySection from './AdviceForm/ApiKeySection';
+import ModelSelector from './AdviceForm/ModelSelector';
+import SettingsPanel from './AdviceForm/SettingsPanel';
+import FormActions from './AdviceForm/FormActions';
+import '../styles/AdviceForm.css';
 
 // Helper functions for working with models
-
-// We no longer use predefined models
-function getModelsByProvider(providerType: ApiProviderType): string[] {
-  return [];
-}
-
 function getModelDisplayName(modelId: string): string {
   // Convert model ID to a readable name
   return modelId
@@ -34,9 +31,11 @@ interface AdviceFormProps {
 
 export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: AdviceFormProps) {
   // Local state for settings
-  const [settings, setSettings] = useState<AdviceGenerationSettings>(
-    advice.settings || { temperature: 0.7 }
-  );
+  const [settings, setSettings] = useState<AdviceGenerationSettings>({
+    temperature: advice.settings?.temperature !== undefined ? advice.settings.temperature : 0.7,
+    maxTokens: advice.settings?.maxTokens !== undefined ? advice.settings.maxTokens : 16000,
+    model: advice.settings?.model || ''
+  });
   
   // State for models
   const [availableModels, setAvailableModels] = useState<ModelInfo[]>([]);
@@ -141,121 +140,6 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
     }
   }, [settings, onFieldChange, advice.id]);
   
-  // Dynamic style for focus and unification of margins
-  React.useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .datocms-select:focus {
-        border-color: #4c9aff !important;
-        box-shadow: 0 0 0 2px rgba(76,154,255,.3) !important;
-      }
-      .hidden-input {
-        display: none !important;
-      }
-      .select-wrapper {
-        margin-top: 5px;
-      }
-      .datocms-field-label {
-        margin-bottom: 5px !important;
-      }
-      .datocms-field > div {
-        margin-bottom: 5px !important;
-      }
-      .field-container {
-        margin-bottom: 20px;
-      }
-      .action-button {
-        min-width: 100px;
-      }
-      .muted-text {
-        color: #666 !important;
-      }
-      .settings-container {
-        margin-top: 20px;
-        padding: 15px;
-        background-color: #f9f9f9;
-        border-radius: 4px;
-        border: 1px dashed #e0e0e0;
-      }
-      .settings-title {
-        margin-top: 0;
-        margin-bottom: 15px;
-        font-size: 14px;
-        color: #666;
-      }
-      .settings-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-      }
-      .grid-span-2 {
-        grid-column: span 2;
-      }
-      .model-loading {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 40px;
-      }
-      .model-loading-text {
-        margin-left: 8px;
-        font-size: 13px;
-        color: #666;
-      }
-      .save-loading {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .spinner {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        margin-right: 6px;
-        border: 2px solid rgba(0, 0, 0, 0.1);
-        border-radius: 50%;
-        border-top-color: #333;
-        animation: spin 1s linear infinite;
-      }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      @keyframes fadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; }
-      }
-      .datocms-field-error {
-        color: #e34850 !important;
-        font-weight: 500 !important;
-        margin-top: 5px !important;
-        font-size: 13px !important;
-        animation: fadeIn 0.3s ease-in-out;
-      }
-      .muted-button {
-        width: 100%;
-        padding: 6px 12px;
-        background-color: #f0f0f0;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
-        font-size: 14px;
-        text-align: center;
-        color: #666;
-        cursor: pointer;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
-
   // Handler for settings change
   const handleSettingsChange = (field: keyof AdviceGenerationSettings, value: any) => {
     setSettings(prev => ({ ...prev, [field]: value }));
@@ -266,6 +150,12 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
     // Check for API key
     if (!advice.apiKey) {
       alert('Please enter an API key before saving');
+      return;
+    }
+    
+    // Check if API key is valid
+    if (isApiKeyValid !== true) {
+      alert('Your API key is invalid. Please enter a valid API key before saving.');
       return;
     }
     
@@ -313,15 +203,6 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
       }, 2000);
     }, 500);
   };
-  
-  // Confirm deletion - use standard browser dialog
-  /* Unused function
-  const handleDelete = () => {
-    if (window.confirm(`Are you sure you want to delete the advice "${advice.name}"?`)) {
-      onDelete(advice.id);
-    }
-  };
-  */
 
   return (
     <FieldGroup>
@@ -382,112 +263,37 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
         />
       </div>
       
-      <div className="field-container">
-        <TextField
-          id={`apiKey_${advice.id}`}
-          name={`apiKey_${advice.id}`}
-          label="API Key"
-          value={advice.apiKey || ''}
-          onChange={(newValue) => onFieldChange('apiKey', newValue)}
-          placeholder={`Enter API key for ${API_PROVIDERS[advice.apiProvider].name}`}
-          error={isApiKeyValid === false ? apiKeyMessage : undefined}
-        />
-        {isApiKeyValid === true && advice.apiKey && (
-          <div style={{ 
-            marginTop: '5px', 
-            fontSize: '13px', 
-            color: '#00aa55',
-            animation: 'fadeIn 0.3s ease-in-out' 
-          }}>
-            {apiKeyMessage}
-          </div>
-        )}
-        {isLoadingModels && advice.apiKey && (
-          <div style={{ 
-            marginTop: '5px', 
-            fontSize: '13px', 
-            color: '#666',
-            display: 'flex',
-            alignItems: 'center'
-          }}>
-            <Spinner size={12} style={{ marginRight: '8px' }} />
-            Validating API key...
-          </div>
-        )}
-      </div>
+      <ApiKeySection 
+        advice={advice}
+        isApiKeyValid={isApiKeyValid}
+        apiKeyMessage={apiKeyMessage}
+        isLoadingModels={isLoadingModels}
+        onApiKeyChange={(newValue) => onFieldChange('apiKey', newValue)}
+      />
       
-      {/* Generation Settings section */}
-      {advice.apiKey ? (
-        <div className="settings-container">
-          <h3 className="settings-title">Generation Settings</h3>
-          <div className="settings-grid">
-            {/* Model selector */}
-            <div className="grid-span-2">
-              {isLoadingModels ? (
-                <div className="model-loading">
-                  <Spinner size={16} />
-                  <span className="model-loading-text">Loading available models...</span>
-                </div>
-              ) : (
-                <TextField
-                  id={`model_${advice.id}`}
-                  name={`model_${advice.id}`}
-                  label="Model"
-                  value=""
-                  onChange={() => {}}
-                  textInputProps={{
-                    className: 'hidden-input',
-                  }}
-                  hint={
-                    <div className="select-wrapper">
-                      <select 
-                        id={`model_select_${advice.id}`}
-                        className="datocms-select"
-                        value={settings.model || ''}
-                        onChange={(e) => handleSettingsChange('model', e.target.value)}
-                        style={{ 
-                          width: '100%', 
-                          padding: '10px',
-                          border: '1px solid #ddd',
-                          borderRadius: '4px',
-                          fontSize: '14px',
-                          backgroundColor: 'white',
-                          boxSizing: 'border-box',
-                          appearance: 'none',
-                          backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
-                          backgroundRepeat: 'no-repeat',
-                          backgroundPosition: 'right 10px center',
-                          backgroundSize: '10px',
-                          paddingRight: '30px',
-                          outline: 'none',
-                          color: '#333'
-                        }}
-                        disabled={availableModels.length === 0}
-                      >
-                        <option value="" disabled>Select a model</option>
-                        {availableModels.map((model) => (
-                          <option key={model.id} value={model.id}>
-                            {model.name || getModelDisplayName(model.id)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  }
-                  error={modelNotFound ? "Previously saved model is not available. Please select a new model." : undefined}
-                />
-              )}
-            </div>
-            
-            {/* Temperature control */}
-            <div>
+      {advice.apiKey && isApiKeyValid === true ? (
+        <SettingsPanel>
+          <ModelSelector 
+            adviceId={advice.id}
+            isLoadingModels={isLoadingModels}
+            availableModels={availableModels}
+            modelValue={settings.model || ''}
+            modelNotFound={modelNotFound}
+            getModelDisplayName={getModelDisplayName}
+            onModelChange={(value) => handleSettingsChange('model', value)}
+          />
+          
+          <div className="settings-grid" style={{ marginTop: '20px' }}>
+            <div className="field-container">
               <TextField
                 id={`temperature_${advice.id}`}
                 name={`temperature_${advice.id}`}
                 label="Temperature"
-                value={String(settings.temperature || 0.7)}
-                onChange={(newValue) => 
-                  handleSettingsChange('temperature', parseFloat(newValue) || 0.7)
-                }
+                value={String(settings.temperature !== undefined ? settings.temperature : 0.7)}
+                onChange={(newValue) => {
+                  const parsedValue = parseFloat(newValue);
+                  handleSettingsChange('temperature', !isNaN(parsedValue) ? parsedValue : 0.7);
+                }}
                 placeholder="0.7"
                 textInputProps={{
                   type: 'number',
@@ -499,16 +305,16 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
               />
             </div>
             
-            {/* Max Tokens control */}
-            <div>
+            <div className="field-container">
               <TextField
                 id={`maxTokens_${advice.id}`}
                 name={`maxTokens_${advice.id}`}
                 label="Max Tokens"
-                value={String(settings.maxTokens || 16000)}
-                onChange={(newValue) => 
-                  handleSettingsChange('maxTokens', parseInt(newValue) || 16000)
-                }
+                value={String(settings.maxTokens !== undefined ? settings.maxTokens : 16000)}
+                onChange={(newValue) => {
+                  const parsedValue = parseInt(newValue);
+                  handleSettingsChange('maxTokens', !isNaN(parsedValue) ? parsedValue : 16000);
+                }}
                 placeholder="16000"
                 textInputProps={{
                   type: 'number',
@@ -518,58 +324,19 @@ export default function AdviceForm({ advice, onFieldChange, onDelete, onSave }: 
               />
             </div>
           </div>
-        </div>
+        </SettingsPanel>
       ) : (
         <div className="field-container muted-text" style={{ textAlign: 'center', padding: '15px', border: '1px dashed #e0e0e0', borderRadius: '4px' }}>
-          Enter API key to configure generation settings
+          {!advice.apiKey ? 'Enter API key to configure generation settings' : isApiKeyValid === false ? 'API key is invalid. Please enter a valid API key to configure generation settings' : 'Validating API key...'}
         </div>
       )}
       
-      {/* Save button */}
-      <div className="field-container" style={{ marginTop: '30px' }}>
-        {saveStatus === 'initial' && (
-          <Button 
-            type="button" 
-            buttonType="primary" 
-            buttonSize="s"
-            onClick={handleSave}
-            disabled={isLoadingModels}
-            className="action-button"
-            style={{ width: '100%' }}
-          >
-            Save
-          </Button>
-        )}
-        
-        {saveStatus === 'saving' && (
-          <Button 
-            type="button" 
-            buttonType="muted" 
-            buttonSize="s"
-            disabled={true}
-            className="action-button"
-            style={{ width: '100%' }}
-          >
-            <span className="save-loading">
-              <span className="spinner"></span>
-              Saving...
-            </span>
-          </Button>
-        )}
-        
-        {saveStatus === 'saved' && (
-          <Button 
-            type="button" 
-            buttonType="muted" 
-            buttonSize="s"
-            onClick={handleSave}
-            className="action-button"
-            style={{ width: '100%' }}
-          >
-            Saved!
-          </Button>
-        )}
-      </div>
+      <FormActions 
+        saveStatus={saveStatus}
+        isLoadingModels={isLoadingModels}
+        onSave={handleSave}
+        isButtonDisabled={!advice.apiKey || isApiKeyValid !== true}
+      />
       
     </FieldGroup>
   );

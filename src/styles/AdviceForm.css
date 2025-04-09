@@ -1,0 +1,125 @@
+/* Styles for AdviceForm and its components */
+
+.datocms-select:focus {
+  border-color: #4c9aff !important;
+  box-shadow: 0 0 0 2px rgba(76,154,255,.3) !important;
+}
+
+.hidden-input {
+  display: none !important;
+}
+
+.select-wrapper {
+  margin-top: 5px;
+}
+
+.datocms-field-label {
+  margin-bottom: 5px !important;
+}
+
+.datocms-field > div {
+  margin-bottom: 5px !important;
+}
+
+.field-container {
+  margin-bottom: 20px;
+}
+
+.action-button {
+  min-width: 100px;
+}
+
+.muted-text {
+  color: #666 !important;
+}
+
+.settings-container {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px dashed #e0e0e0;
+}
+
+.settings-title {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #666;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.grid-span-2 {
+  grid-column: span 2;
+}
+
+.model-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.model-loading-text {
+  margin-left: 8px;
+  font-size: 13px;
+  color: #666;
+}
+
+.save-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #333;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.datocms-field-error {
+  color: #e34850 !important;
+  font-weight: 500 !important;
+  margin-top: 5px !important;
+  font-size: 13px !important;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.muted-button {
+  width: 100%;
+  padding: 6px 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+  color: #666;
+  cursor: pointer;
+} 
